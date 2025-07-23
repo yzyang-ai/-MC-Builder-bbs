@@ -1,0 +1,49 @@
+# 🎮 MC Builder 论坛
+
+一个专为 Minecraft 玩家打造的现代化论坛系统，采用像素风格设计，功能完善且易于部署。
+
+## ✨ 特性
+
+- 🎨 **Minecraft主题设计** - 完全贴合MC游戏风格的UI界面
+- 📱 **响应式布局** - 完美适配PC、平板和手机
+- 🔐 **用户系统** - 注册、登录、用户等级、头像系统
+- 📁 **分类管理** - 多个预设分类，支持自定义
+- 💬 **帖子系统** - 发帖、回复、浏览统计
+- 🎯 **等级系统** - 从新手矿工到建筑大师的成长体系
+- 📊 **数据统计** - 实时统计用户、帖子、活跃度等数据
+- 🔍 **搜索功能** - 支持帖子标题和内容全文搜索
+- ⚡ **性能优化** - 数据库索引优化，查询效率高
+
+## 🛠️ 技术栈
+
+- **后端**: PHP 7.4+ (支持PHP 8.x)
+- **数据库**: MySQL 5.7+ / MariaDB 10.2+
+- **前端**: HTML5 + CSS3 + JavaScript (原生)
+- **字体**: Google Fonts (Press Start 2P)
+- **图标**: Unicode Emoji
+
+## 📋 系统要求
+
+### 最低要求
+- PHP 7.4 或更高版本
+- MySQL 5.7 或 MariaDB 10.2
+- Apache/Nginx Web服务器
+- 至少 100MB 存储空间
+- 支持 URL 重写 (可选)
+
+### PHP扩展要求
+- PDO
+- PDO MySQL
+- GD (图像处理)
+- Session
+- JSON
+- mbstring
+
+## 🚀 安装教程
+
+### 方法一：使用安装向导 (推荐)
+
+1. **下载源码**
+   ```bash
+   git clone https://github.com/your-repo/mc-builder-forum.git
+   cd mc-builder-forum
