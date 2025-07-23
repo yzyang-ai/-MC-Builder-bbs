@@ -42,8 +42,4 @@
 ## 🚀 安装教程
 
 ### 方法一：使用安装向导 (推荐)
-
-1. **下载源码**
-   ```bash
-   git clone https://github.com/your-repo/mc-builder-forum.git
-   cd mc-builder-forum
+下载解压源码后打开install.php安装即可
