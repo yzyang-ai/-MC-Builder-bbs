@@ -44,15 +44,30 @@ $author = [
 $stmt = $pdo->prepare("UPDATE threads SET views = views + 1 WHERE id = ?");
 $stmt->execute([$thread_id]);
 
-// 获取回复
+// 获取当前页码
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$page_size = 10;
+$offset = ($page - 1) * $page_size;
+
+// 获取总回复数
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM replies WHERE thread_id = ?");
+$stmt->execute([$thread_id]);
+$total_replies = $stmt->fetchColumn();
+$total_pages = max(1, ceil($total_replies / $page_size));
+
+// 获取当前页的回复（只查用到的字段）
 $stmt = $pdo->prepare("
-    SELECT r.*, u.username, u.avatar, u.user_level, u.join_date, u.posts_count 
+    SELECT r.id, r.content, r.created_at, u.username, u.avatar, u.user_level, u.join_date, u.posts_count 
     FROM replies r 
     JOIN users u ON r.author_id = u.id 
     WHERE r.thread_id = ? 
     ORDER BY r.created_at ASC
+    LIMIT ? OFFSET ?
 ");
-$stmt->execute([$thread_id]);
+$stmt->bindValue(1, $thread_id, PDO::PARAM_INT);
+$stmt->bindValue(2, $page_size, PDO::PARAM_INT);
+$stmt->bindValue(3, $offset, PDO::PARAM_INT);
+$stmt->execute();
 $replies = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // 处理回复提交
@@ -75,6 +90,7 @@ if ($_POST && isLoggedIn()) {
             // 更新用户发帖数
             $stmt = $pdo->prepare("UPDATE users SET posts_count = posts_count + 1 WHERE id = ?");
             $stmt->execute([$_SESSION['user_id']]);
+            updateUserLevel($_SESSION['user_id']);
             
             header("Location: thread.php?id=$thread_id#reply-" . $pdo->lastInsertId());
             exit;
@@ -198,9 +214,21 @@ if ($can_delete && isset($_GET['delete'])) {
             | <?php echo $thread['created_at']; ?>
             | 👀 <?php echo $thread['views']; ?> 浏览
         </div>
-        <div class="thread-content"><?php echo nl2br(htmlspecialchars($thread['content'])); ?></div>
+        <div class="thread-content"><?php echo allow_basic_html(nl2br($thread['content'])); ?></div>
         <div class="thread-actions">
-            <!-- 点赞和删除按钮已在逻辑中插入 -->
+            <?php if (isLoggedIn()): ?>
+                <?php if (!$liked): ?>
+                    <a href="thread.php?id=<?php echo $thread['id']; ?>&like=<?php echo $thread['id']; ?>" class="btn">👍 点赞 (<?php echo $like_count; ?>)</a>
+                <?php else: ?>
+                    <span class="btn" style="background:#eee;color:#aaa;cursor:not-allowed;">👍 已点赞 (<?php echo $like_count; ?>)</span>
+                <?php endif; ?>
+                <?php if ($can_delete): ?>
+                    <a href="edit-thread.php?id=<?php echo $thread['id']; ?>" class="btn btn-primary">编辑</a>
+                    <a href="thread.php?id=<?php echo $thread['id']; ?>&delete=1" class="btn btn-danger" onclick="return confirm('确定要删除该帖子吗？');">删除</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <span class="btn" style="background:#eee;color:#aaa;cursor:not-allowed;">👍 点赞 (<?php echo $like_count; ?>)</span>
+            <?php endif; ?>
         </div>
         <!-- 点赞和删除按钮插入点 -->
         <?php /* 点赞和删除按钮已在逻辑中插入，这里保留插入点 */ ?>
@@ -215,11 +243,28 @@ if ($can_delete && isset($_GET['delete'])) {
                     <div class="reply-meta">
                         <b><?php echo htmlspecialchars($reply['username']); ?></b> 回复于 <?php echo $reply['created_at']; ?>
                     </div>
-                    <div class="reply-content"><?php echo nl2br(htmlspecialchars($reply['content'])); ?></div>
+                    <div class="reply-content"><?php echo allow_basic_html(nl2br($reply['content'])); ?></div>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    <?php if ($total_pages > 1): ?>
+<div class="pagination" style="margin: 24px 0;">
+    <?php if ($page > 1): ?>
+        <a href="thread.php?id=<?php echo $thread_id; ?>&page=<?php echo $page-1; ?>">上一页</a>
+    <?php endif; ?>
+    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+        <?php if ($i == $page): ?>
+            <span class="current" style="padding: 6px 12px; color: #FFD700; font-weight: bold;">第<?php echo $i; ?>页</span>
+        <?php else: ?>
+            <a href="thread.php?id=<?php echo $thread_id; ?>&page=<?php echo $i; ?>">第<?php echo $i; ?>页</a>
+        <?php endif; ?>
+    <?php endfor; ?>
+    <?php if ($page < $total_pages): ?>
+        <a href="thread.php?id=<?php echo $thread_id; ?>&page=<?php echo $page+1; ?>">下一页</a>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
     <?php if (isLoggedIn()): ?>
         <div class="reply-form">
             <form method="post">

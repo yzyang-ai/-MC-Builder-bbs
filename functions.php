@@ -105,7 +105,7 @@ function createTables() {
 // 获取配色设置
 function getColorSettings() {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT value FROM settings WHERE `key` = 'colors'");
+    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'colors'");
     $stmt->execute();
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $default = [
@@ -113,12 +113,188 @@ function getColorSettings() {
         'background' => '#fff',
         'button' => '#8B4513'
     ];
-    return $row ? json_decode($row['value'], true) : $default;
+    return $row ? json_decode($row['setting_value'], true) : $default;
 }
 
 // 获取单个颜色
 function getColor($name) {
     $colors = getColorSettings();
     return isset($colors[$name]) ? $colors[$name] : '#000000';
+}
+
+function sendMail($to, $subject, $body) {
+    global $pdo;
+    $log = '';
+    // 获取SMTP配置
+    $settings = [];
+    $res = $pdo->query("SELECT * FROM settings WHERE setting_key LIKE 'smtp_%'");
+    foreach ($res as $row) {
+        $settings[$row['setting_key']] = $row['setting_value'];
+    }
+    $host = $settings['smtp_host'] ?? '';
+    $port = $settings['smtp_port'] ?? 25;
+    $user = $settings['smtp_user'] ?? '';
+    $pass = $settings['smtp_pass'] ?? '';
+    $from = $settings['smtp_from'] ?? '';
+    $secure = $settings['smtp_secure'] ?? '';
+    $log .= "SMTP服务器: $host:$port\n";
+    $log .= "发件人: $from\n";
+    $log .= "收件人: $to\n";
+    if (file_exists(__DIR__.'/PHPMailer/PHPMailer.php')) {
+        require_once __DIR__.'/PHPMailer/PHPMailer.php';
+        require_once __DIR__.'/PHPMailer/SMTP.php';
+        require_once __DIR__.'/PHPMailer/Exception.php';
+        $mail = new PHPMailer\PHPMailer\PHPMailer();
+        $mail->isSMTP();
+        $mail->Host = $host;
+        $mail->Port = $port;
+        $mail->SMTPAuth = true;
+        $mail->Username = $user;
+        $mail->Password = $pass;
+        if ($secure) $mail->SMTPSecure = $secure;
+        $mail->CharSet = 'UTF-8';
+        $mail->setFrom($from);
+        $mail->addAddress($to);
+        $mail->Subject = $subject;
+        $mail->isHTML(true);
+        $mail->Body = $body;
+        if (!$mail->send()) {
+            $log .= "发送失败: " . $mail->ErrorInfo . "\n";
+        } else {
+            $log .= "发送成功\n";
+        }
+        return $log;
+    } else {
+        $headers = "From: $from\r\nContent-Type: text/html; charset=UTF-8";
+        $result = mail($to, $subject, $body, $headers);
+        if (!$result) {
+            $log .= "mail() 发送失败\n";
+        } else {
+            $log .= "mail() 发送成功\n";
+        }
+        return $log;
+    }
+}
+
+function getEmailVerificationEnabled() {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'enable_email_verification'");
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return isset($row['setting_value']) && $row['setting_value'] == '1';
+}
+
+// 允许 <img> 标签的函数
+function allow_img_tag($text) {
+    // 只允许 <img> 标签，且只允许 http(s) src
+    $text = strip_tags($text, '<img>');
+    return preg_replace_callback(
+        '/<img\\s+[^>]*src=[\'\"]?([^\'\" >]+)[\'\"]?[^>]*>/i',
+        function($matches) {
+            $src = $matches[1];
+            if (preg_match('/^https?:\/\//i', $src)) {
+                return '<img src="'.htmlspecialchars($src).'" style="max-width:100%;height:auto;">';
+            }
+            return '';
+        },
+        $text
+    );
+}
+
+// 允许基础安全HTML标签（b, i, u, a, code, pre, ul, ol, li, img）
+function allow_basic_html(
+    $text
+) {
+    // 允许的标签
+    $allowed = '<b><i><u><a><code><pre><ul><ol><li><img><p><br>';
+    $text = strip_tags($text, $allowed);
+    // 只允许 http(s) 的 img src
+    $text = preg_replace_callback(
+        '/<img\s+[^>]*src=[\'\"]?([^\'\" >]+)[\'\"]?[^>]*>/i',
+        function($matches) {
+            $src = $matches[1];
+            if (preg_match('/^https?:\/\//i', $src)) {
+                return '<img src="'.htmlspecialchars($src).'" style="max-width:100%;height:auto;">';
+            }
+            return '';
+        },
+        $text
+    );
+    // a 标签只允许 http(s) 协议
+    $text = preg_replace_callback(
+        '/<a\s+[^>]*href=[\'\"]?([^\'\" >]+)[\'\"]?[^>]*>(.*?)<\/a>/i',
+        function($matches) {
+            $href = $matches[1];
+            $label = $matches[2];
+            if (preg_match('/^https?:\/\//i', $href)) {
+                return '<a href="'.htmlspecialchars($href).'" target="_blank">'.$label.'</a>';
+            }
+            return $label;
+        },
+        $text
+    );
+    // 去除 <pre>、<ul>、<ol>、<li> 标签内的 <br>
+    $text = preg_replace_callback('/<pre[^>]*>.*?<\/pre>/is', function($m) {
+        return str_replace('<br />', '', $m[0]);
+    }, $text);
+    $text = preg_replace_callback('/<ul[^>]*>.*?<\/ul>/is', function($m) {
+        return str_replace('<br />', '', $m[0]);
+    }, $text);
+    $text = preg_replace_callback('/<ol[^>]*>.*?<\/ol>/is', function($m) {
+        return str_replace('<br />', '', $m[0]);
+    }, $text);
+    $text = preg_replace_callback('/<li[^>]*>.*?<\/li>/is', function($m) {
+        return str_replace('<br />', '', $m[0]);
+    }, $text);
+    return $text;
+}
+
+// 基础Markdown解析（不依赖外部库，允许混用HTML）
+function simple_markdown($text) {
+    // 标题 #
+    $text = preg_replace('/^###### (.*)$/m', '<h6>$1</h6>', $text);
+    $text = preg_replace('/^##### (.*)$/m', '<h5>$1</h5>', $text);
+    $text = preg_replace('/^#### (.*)$/m', '<h4>$1</h4>', $text);
+    $text = preg_replace('/^### (.*)$/m', '<h3>$1</h3>', $text);
+    $text = preg_replace('/^## (.*)$/m', '<h2>$1</h2>', $text);
+    $text = preg_replace('/^# (.*)$/m', '<h1>$1</h1>', $text);
+    // 粗体 **text** 或 __text__
+    $text = preg_replace('/\*\*(.*?)\*\*/s', '<strong>$1</strong>', $text);
+    $text = preg_replace('/__(.*?)__/s', '<strong>$1</strong>', $text);
+    // 斜体 *text* 或 _text_
+    $text = preg_replace('/\*(.*?)\*/s', '<em>$1</em>', $text);
+    $text = preg_replace('/_(.*?)_/s', '<em>$1</em>', $text);
+    // 行内代码 `code`
+    $text = preg_replace('/`([^`]+)`/', '<code>$1</code>', $text);
+    // 链接 [text](url)
+    $text = preg_replace('/\[([^\]]+)\]\(([^\)]+)\)/', '<a href="$2" target="_blank">$1</a>', $text);
+    // 换行
+    $text = nl2br($text);
+    return $text;
+}
+
+function updateUserLevel($user_id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT posts_count, user_level FROM users WHERE id=?");
+    $stmt->execute([$user_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $posts = $row['posts_count'];
+    $current_level = $row['user_level'];
+    // 管理员（建筑大师）不自动降级
+    if ($current_level === '建筑大师') return;
+    $levels = [
+        200 => '红石工程师',
+        80  => '钻石大师',
+        30  => '铁器专家',
+        10  => '石器时代',
+        0   => '新手矿工'
+    ];
+    foreach ($levels as $min => $level) {
+        if ($posts >= $min) {
+            $stmt = $pdo->prepare("UPDATE users SET user_level=? WHERE id=?");
+            $stmt->execute([$level, $user_id]);
+            break;
+        }
+    }
 }
 ?>

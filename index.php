@@ -70,12 +70,13 @@ particlesJS('particles-js', {
                     <li><a href="recent.php">🆕 最新</a></li>
                     <li><a href="members.php">👥 成员</a></li>
                     <li><a href="feedback.php">💬 反馈</a></li>
+                    <li><a href="chat.php">💬 聊天室</a></li>
                 </ul>
             </nav>
             <div class="user-info">
                 <?php if (isLoggedIn()): ?>
                     <?php $user = getCurrentUser(); ?>
-                    <img src="images/avatars/<?php echo $user['avatar']; ?>" alt="头像" class="user-avatar">
+                    <img src="images/avatars/<?php echo $user['avatar']; ?>" alt="头像" class="user-avatar" onclick="window.location.href='profile.php?id=<?php echo $user['id']; ?>'" style="cursor:pointer;">
                     <span>欢迎, <?php echo htmlspecialchars($user['username']); ?>!</span>
                     <a href="logout.php" class="btn">退出</a>
                 <?php else: ?>
@@ -98,6 +99,23 @@ $colors = getColorSettings();
 }
 </style>
     </header>
+    <?php
+    // 公告展示区
+    $announcements = $pdo->query("SELECT * FROM announcements ORDER BY created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+    if ($announcements): ?>
+    <div class="announcement-list">
+        <h3>📢 公告</h3>
+        <ul>
+        <?php foreach ($announcements as $a): ?>
+            <li>
+                <strong><?php echo htmlspecialchars($a['title']); ?></strong>
+                <span style="color:#888;font-size:12px;">(<?php echo date('Y-m-d', strtotime($a['created_at'])); ?>)</span><br>
+                <span><?php echo nl2br(htmlspecialchars($a['content'])); ?></span>
+            </li>
+        <?php endforeach; ?>
+        </ul>
+    </div>
+    <?php endif; ?>
 
     <!-- 主要内容 -->
     <div class="container">

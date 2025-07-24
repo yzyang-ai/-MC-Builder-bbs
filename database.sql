@@ -28,6 +28,9 @@ CREATE TABLE `users` (
   `signature` text COLLATE utf8mb4_unicode_ci,
   `is_banned` tinyint(1) DEFAULT 0,
   `ban_reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email_verified` tinyint(1) DEFAULT 0,
+  `email_verification_code` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email_verification_expire` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
@@ -194,7 +197,13 @@ INSERT INTO `settings` (`setting_key`, `setting_value`, `setting_type`, `descrip
 ('enable_email_verification', '0', 'boolean', '是否启用邮箱验证'),
 ('maintenance_mode', '0', 'boolean', '维护模式'),
 ('default_user_level', '新手矿工', 'string', '新用户默认等级'),
-('max_upload_size', '5242880', 'number', '最大上传文件大小(字节)');
+('max_upload_size', '5242880', 'number', '最大上传文件大小(字节)'),
+('smtp_host', '', 'string', 'SMTP服务器'),
+('smtp_port', '', 'string', 'SMTP端口'),
+('smtp_user', '', 'string', 'SMTP账号'),
+('smtp_pass', '', 'string', 'SMTP密码'),
+('smtp_from', '', 'string', '发件人邮箱'),
+('smtp_secure', '', 'string', '加密方式');
 
 -- --------------------------------------------------------
 
@@ -323,13 +332,22 @@ CREATE TABLE IF NOT EXISTS thread_likes (
     UNIQUE KEY (thread_id, user_id)
 );
 
-COMMIT;
+CREATE TABLE IF NOT EXISTS `announcements` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `content` TEXT NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ----------------------------
--- 颜色表
+-- 聊天室消息表
 -- ----------------------------
-DROP TABLE IF EXISTS settings;
-CREATE TABLE IF NOT EXISTS `settings` (
-  `key` VARCHAR(50) PRIMARY KEY,
-  `value` TEXT
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `username` VARCHAR(50) NOT NULL,
+  `content` TEXT NOT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+COMMIT;

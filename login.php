@@ -10,9 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        header('Location: index.php');
-        exit;
+        if (getEmailVerificationEnabled() && !$user['email_verified']) {
+            $_SESSION['pending_verify_email'] = $user['email'];
+            $error = '您的邮箱尚未验证，请先完成邮箱验证。';
+        } else {
+            $_SESSION['user_id'] = $user['id'];
+            header('Location: index.php');
+            exit;
+        }
     } else {
         $error = '用户名或密码错误';
     }

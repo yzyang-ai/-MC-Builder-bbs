@@ -25,8 +25,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashed = password_hash($password, PASSWORD_DEFAULT);
             $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)")
                 ->execute([$username, $email, $hashed]);
-            header('Location: login.php');
-            exit;
+            if (getEmailVerificationEnabled()) {
+                // 注册成功后：
+                $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $expire = date('Y-m-d H:i:s', time() + 600); // 10分钟有效
+                $stmt = $pdo->prepare("UPDATE users SET email_verification_code=?, email_verification_expire=? WHERE email=?");
+                $stmt->execute([$code, $expire, $email]);
+                sendMail($email, '您的邮箱验证码', '您的验证码是：<b>' . $code . '</b>，10分钟内有效。');
+                $_SESSION['pending_verify_email'] = $email;
+                header('Location: verify_email.php');
+                exit;
+            } else {
+                // 直接激活，无需邮箱验证
+                $stmt = $pdo->prepare("UPDATE users SET email_verified=1 WHERE email=?");
+                $stmt->execute([$email]);
+                header('Location: login.php?regok=1');
+                exit;
+            }
         }
     }
 }

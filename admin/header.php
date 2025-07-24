@@ -41,6 +41,7 @@ if (!$user || $user['user_level'] !== '建筑大师') {
     <a href="replies.php">回复管理</a>
     <a href="feedback.php">问题反馈</a>
     <a href="colors.php">颜色设置</a> 
+    <a href="smtp_settings.php">SMTP配置</a>
     <a href="logout.php">退出登录</a>
 </div>
 <div class="admin-container"> 
