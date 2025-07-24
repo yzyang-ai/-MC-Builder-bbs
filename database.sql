@@ -324,3 +324,12 @@ CREATE TABLE IF NOT EXISTS thread_likes (
 );
 
 COMMIT;
+
+-- ----------------------------
+-- 颜色表
+-- ----------------------------
+DROP TABLE IF EXISTS settings;
+CREATE TABLE IF NOT EXISTS `settings` (
+  `key` VARCHAR(50) PRIMARY KEY,
+  `value` TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

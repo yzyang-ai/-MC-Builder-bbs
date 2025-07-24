@@ -102,4 +102,23 @@ function createTables() {
 
 // 初始化数据库（建议只在安装流程中调用，不要自动执行）
 // createTables();
+// 获取配色设置
+function getColorSettings() {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT value FROM settings WHERE `key` = 'colors'");
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $default = [
+        'primary' => '#FFD700',
+        'background' => '#fff',
+        'button' => '#8B4513'
+    ];
+    return $row ? json_decode($row['value'], true) : $default;
+}
+
+// 获取单个颜色
+function getColor($name) {
+    $colors = getColorSettings();
+    return isset($colors[$name]) ? $colors[$name] : '#000000';
+}
 ?>

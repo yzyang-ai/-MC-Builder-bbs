@@ -1,7 +1,9 @@
 <?php
 require_once '../functions.php';
 global $pdo;
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // 只允许管理员访问
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -38,6 +40,7 @@ if (!$user || $user['user_level'] !== '建筑大师') {
     <a href="threads.php">帖子管理</a>
     <a href="replies.php">回复管理</a>
     <a href="feedback.php">问题反馈</a>
+    <a href="colors.php">颜色设置</a> 
     <a href="logout.php">退出登录</a>
 </div>
 <div class="admin-container"> 

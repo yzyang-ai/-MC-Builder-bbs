@@ -7,8 +7,8 @@ error_reporting(E_ALL);
 // 数据库配置（请根据实际情况修改）
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', 'password');
-define('DB_NAME', 'name');
+define('DB_PASS', '6b292740f809aaeb');
+define('DB_NAME', '1');
 
 define('SITE_NAME', 'MC Builder 论坛');
 define('SITE_URL', 'http://localhost');

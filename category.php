@@ -32,28 +32,122 @@ $threads = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title><?php echo htmlspecialchars($category['name']); ?> - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .cat-header {
+            background: linear-gradient(90deg, #FFD700 0%, #FFB300 100%);
+            color: #222;
+            border-radius: 10px;
+            padding: 30px 30px 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .cat-header .cat-icon {
+            font-size: 3em;
+            margin-right: 18px;
+        }
+        .cat-header .cat-info h1 {
+            margin: 0 0 8px 0;
+            font-size: 2em;
+            color: #8B4513;
+        }
+        .cat-header .cat-info p {
+            margin: 0;
+            color: #444;
+            font-size: 1.1em;
+        }
+        .thread-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .thread-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 20px 22px;
+            min-width: 260px;
+            flex: 1 1 320px;
+            max-width: 420px;
+            transition: box-shadow 0.2s;
+            border: 1px solid #eee;
+        }
+        .thread-card:hover {
+            box-shadow: 0 4px 16px rgba(139,69,19,0.13);
+            border-color: #FFD700;
+        }
+        .thread-title {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 8px;
+            text-decoration: none;
+        }
+        .thread-meta {
+            color: #888;
+            font-size: 0.98em;
+        }
+        .no-threads {
+            color: #888;
+            text-align: center;
+            margin: 40px 0;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 30px;
+            background: #FFD700;
+            color: #8B4513;
+            padding: 8px 22px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .back-btn:hover {
+            background: #8B4513;
+            color: #FFD700;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <h1><?php echo htmlspecialchars($category['name']); ?></h1>
-    <p><?php echo htmlspecialchars($category['description']); ?></p>
-    <h2>帖子列表</h2>
+    <div class="cat-header">
+        <span class="cat-icon"><?php echo htmlspecialchars($category['icon']); ?></span>
+        <div class="cat-info">
+            <h1><?php echo htmlspecialchars($category['name']); ?></h1>
+            <p><?php echo htmlspecialchars($category['description']); ?></p>
+        </div>
+    </div>
+    <h2 style="color:#FFD700; margin-bottom:18px;">帖子列表</h2>
     <?php if (empty($threads)): ?>
-        <p>该分类下暂无帖子。</p>
+        <div class="no-threads">该分类下暂无帖子。</div>
     <?php else: ?>
-        <ul>
+        <div class="thread-list">
         <?php foreach ($threads as $thread): ?>
-            <li>
-                <a href="thread.php?id=<?php echo $thread['id']; ?>">
+            <div class="thread-card">
+                <a class="thread-title" href="thread.php?id=<?php echo $thread['id']; ?>">
                     <?php echo htmlspecialchars($thread['title']); ?>
                 </a>
-                by <?php echo htmlspecialchars($thread['username']); ?>
-                (<?php echo $thread['created_at']; ?>)
-            </li>
+                <div class="thread-meta">
+                    by <?php echo htmlspecialchars($thread['username']); ?>
+                    <span style="margin-left:10px;">创建于 <?php echo $thread['created_at']; ?></span>
+                </div>
+            </div>
         <?php endforeach; ?>
-        </ul>
+        </div>
     <?php endif; ?>
-    <a href="index.php" class="btn">返回首页</a>
+    <a href="index.php" class="back-btn">返回首页</a>
+</div>
+<div class="cat-info">
+    <h1><?php echo htmlspecialchars($category['name']); ?></h1>
+    <p><?php echo htmlspecialchars($category['description']); ?></p>
+    <?php if (isLoggedIn()): ?>
+        <a href="post.php" class="btn btn-primary">发布新帖到本分类</a>
+    <?php else: ?>
+        <a href="login.php" class="btn btn-primary">登录后发布新帖</a>
+    <?php endif; ?>
 </div>
 </body>
 </html> 

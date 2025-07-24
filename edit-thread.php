@@ -46,22 +46,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <div class="container">
-    <h1>编辑帖子</h1>
-    <?php if (!empty($error)): ?>
-        <div class="alert alert-error"><?php echo $error; ?></div>
-    <?php endif; ?>
-    <form method="post">
-        <div class="form-group">
-            <label for="title">标题</label>
-            <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($thread['title']); ?>" required minlength="3" style="width:100%;">
-        </div>
-        <div class="form-group">
-            <label for="content">内容</label>
-            <textarea id="content" name="content" rows="10" required minlength="10" style="width:100%;"><?php echo htmlspecialchars($thread['content']); ?></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">保存修改</button>
-        <a href="thread.php?id=<?php echo $thread_id; ?>" class="btn">取消</a>
-    </form>
+    <div class="main-content card" style="max-width:600px;margin:40px auto;">
+        <h2 style="color:#FFD700;">编辑帖子</h2>
+        <?php if (!empty($error)): ?>
+            <div class="alert alert-error"><?php echo $error; ?></div>
+        <?php endif; ?>
+        <form method="post">
+            <div class="form-group">
+                <label for="title">标题</label>
+                <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($thread['title']); ?>" required minlength="3" style="width:100%;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <input type="file" id="img-upload" accept="image/*" style="display:none;">
+                <button type="button" class="btn" onclick="document.getElementById('img-upload').click();">上传图片</button>
+            </div>
+            <script>
+                document.getElementById('img-upload').addEventListener('change', function(){
+                    var file = this.files[0];
+                    if (!file) return;
+                    var formData = new FormData();
+                    formData.append('image', file);
+                    fetch('upload_image.php', {method:'POST', body:formData})
+                        .then(r=>r.json()).then(res=>{
+                            if(res.url){
+                                var ta = document.getElementById('content');
+                                var imgTag = '\n<img src="'+res.url+'" alt="图片" style="max-width:100%;">\n';
+                                ta.value += imgTag;
+                                alert('图片上传成功！');
+                            }else{
+                                alert(res.error || '上传失败');
+                            }
+                        });
+                });
+            </script>
+            <div class="form-group">
+                <label for="content">内容</label>
+                <textarea id="content" name="content" rows="10" required minlength="10" style="width:100%;"><?php echo htmlspecialchars($thread['content']); ?></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+            <a href="thread.php?id=<?php echo $thread_id; ?>" class="btn">取消</a>
+        </form>
+    </div>
 </div>
 </body>
 </html> 

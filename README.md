@@ -42,4 +42,15 @@
 ## 🚀 安装教程
 
 ### 方法一：使用安装向导 (推荐)
-下载解压源码后打开install.php安装即可
+
+1. **下载源码**
+执行install.php
+
+##报错
+###最新版报错
+最新版更新报错请执行sql
+DROP TABLE IF EXISTS settings;
+CREATE TABLE IF NOT EXISTS `settings` (
+  `key` VARCHAR(50) PRIMARY KEY,
+  `value` TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

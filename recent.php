@@ -42,5 +42,19 @@ $threads = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php endif; ?>
     <a href="index.php" class="btn">返回首页</a>
 </div>
+<div class="container">
+    <h1>🆕 最新帖子</h1>
+    <?php if (isLoggedIn()): ?>
+        <a href="post.php" class="btn btn-primary" style="margin-bottom: 20px;">发布新帖</a>
+    <?php else: ?>
+        <a href="login.php" class="btn btn-primary" style="margin-bottom: 20px;">登录后发布新帖</a>
+    <?php endif; ?>
+    
+    <?php if (empty($threads)): ?>
+        <p>暂无帖子。</p>
+    <?php else: ?>
+        <!-- 帖子列表内容 -->
+    <?php endif; ?>
+</div>
 </body>
 </html> 

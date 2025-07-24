@@ -1,9 +1,6 @@
 <?php
 require_once 'functions.php';
 global $pdo;
-if (!$pdo) {
-    die('数据库连接失败：请检查 config.php 的数据库配置、账号密码、数据库是否存在，以及主机 PDO/pdo_mysql 扩展是否启用。');
-}
 
 // 获取分类列表
 $stmt = $pdo->prepare("SELECT * FROM categories ORDER BY sort_order ASC");
@@ -32,7 +29,6 @@ $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM threads");
 $stmt->execute();
 $thread_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 ?>
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -43,20 +39,39 @@ $thread_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     <link rel="icon" href="images/favicon.ico" type="image/x-icon">
 </head>
 <body>
+<div id="particles-js"></div>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+particlesJS('particles-js', {
+  "particles": {
+    "number": {"value": 60, "density": {"enable": true, "value_area": 800}},
+    "color": {"value": "#DDA0DD"},
+    "shape": {"type": "circle"},
+    "opacity": {"value": 0.5, "random": true},
+    "size": {"value": 3, "random": true},
+    "line_linked": {"enable": true, "distance": 150, "color": "#A9A9A9", "opacity": 0.3, "width": 1},
+    "move": {"enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false}
+  },
+  "interactivity": {
+    "detect_on": "canvas",
+    "events": {"onhover": {"enable": true, "mode": "repulse"}, "onclick": {"enable": true, "mode": "push"}},
+    "modes": {"repulse": {"distance": 100, "duration": 0.4}, "push": {"particles_nb": 4}}
+  },
+  "retina_detect": true
+});
+</script>
     <!-- 头部导航 -->
     <header class="header">
         <div class="header-content">
             <a href="index.php" class="logo">⛏️ MC Builder</a>
-            
             <nav>
                 <ul class="nav-menu">
                     <li><a href="index.php">🏠 首页</a></li>
-                    <li><a href="categories.php">📁 分类</a></li>
                     <li><a href="recent.php">🆕 最新</a></li>
                     <li><a href="members.php">👥 成员</a></li>
+                    <li><a href="feedback.php">💬 反馈</a></li>
                 </ul>
             </nav>
-            
             <div class="user-info">
                 <?php if (isLoggedIn()): ?>
                     <?php $user = getCurrentUser(); ?>
@@ -69,26 +84,36 @@ $thread_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
                 <?php endif; ?>
             </div>
         </div>
+        <?php
+// 获取颜色设置
+$colors = getColorSettings();
+?>
+<style>
+:root {
+    --primary-color: <?php echo $colors['主色调'] ?? '#FFD700'; ?>;
+    --secondary-color: <?php echo $colors['辅助色'] ?? '#8B4513'; ?>;
+    --background-color: <?php echo $colors['背景色'] ?? '#FFFFFF'; ?>;
+    --text-color: <?php echo $colors['文本色'] ?? '#333333'; ?>;
+    --link-color: <?php echo $colors['链接色'] ?? '#DDA0DD'; ?>;
+}
+</style>
     </header>
 
     <!-- 主要内容 -->
     <div class="container">
         <!-- 欢迎横幅 -->
-        <div class="main-content mc-border">
-            <h1>🎮 欢迎来到 MC Builder 论坛！</h1>
-            <p>这里是 Minecraft 玩家的聚集地，分享建筑、讨论技巧、展示创意！</p>
-            <strong>暂不支持上传图片，请上传至任意网站或网盘将链接发出（功能将在正式版上线添加）</strong>
-            <p>当前论坛系统版本：v0.1 bate<br>更新预告：<br>1.添加上传图片功能<br>2.添加在线聊天室</p>
-             <a href="http://bbs.yue910.xyz/feedback.php">问题反馈戳我</a>
+        <div class="main-content card" style="text-align:center;">
+            <h1 style="color:#FFD700; font-size:2.1em; margin-bottom:10px;">🎮 欢迎来到 MC Builder 论坛！</h1>
+            <p style="color:#555; font-size:1.15em;">这里是 Minecraft 玩家的聚集地，分享建筑、讨论技巧、展示创意！</p>
             <div style="margin-top: 20px;">
                 <span class="btn">👥 <?php echo $user_count; ?> 位玩家</span>
                 <span class="btn">📝 <?php echo $thread_count; ?> 个帖子</span>
-                <span class="btn">⭐ 不活跃社区</span>
+                <span class="btn">⭐ 活跃社区</span>
             </div>
         </div>
 
         <!-- 论坛分类 -->
-        <div class="main-content">
+        <div class="main-content card">
             <h2 style="margin-bottom: 20px; color: #FFD700;">📁 论坛分类</h2>
             <div class="categories-grid">
                 <?php foreach ($categories as $category): ?>
@@ -102,87 +127,47 @@ $thread_count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         </div>
 
         <!-- 最新帖子 -->
-        <div class="main-content">
+        <div class="main-content card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="color: #FFD700;">🆕 最新帖子</h2>
-                <?php if (isLoggedIn()): ?>
-                    <a href="post.php" class="btn btn-primary">✏️ 发布帖子</a>
-                <?php endif; ?>
+                <a href="recent.php" class="btn">查看更多</a>
             </div>
-            
-            <div class="thread-list">
-                <?php if (empty($latest_threads)): ?>
-                    <div style="text-align: center; padding: 40px; color: #AAAAAA;">
-                        <h3>📝 还没有帖子</h3>
-                        <p>成为第一个发布帖子的玩家吧！</p>
-                        <?php if (isLoggedIn()): ?>
-                            <a href="post.php" class="btn btn-primary" style="margin-top: 15px;">发布第一个帖子</a>
-                        <?php else: ?>
-                            <a href="register.php" class="btn" style="margin-top: 15px;">立即注册</a>
-                        <?php endif; ?>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($latest_threads as $thread): ?>
-                    <div class="thread-item">
-                        <img src="images/avatars/<?php echo $thread['avatar']; ?>" alt="头像" class="thread-avatar">
-                        <div class="thread-content">
-                            <a href="thread.php?id=<?php echo $thread['id']; ?>" class="thread-title">
-                                <?php echo htmlspecialchars($thread['title']); ?>
-                            </a>
-                            <div class="thread-meta">
-                                由 <strong><?php echo htmlspecialchars($thread['username']); ?></strong> 
-                                发布在 <strong><?php echo htmlspecialchars($thread['category_name']); ?></strong> 
-                                • <?php echo timeAgo($thread['created_at']); ?>
-                            </div>
-                        </div>
-                        <div class="thread-stats">
-                            <div>👀 <?php echo $thread['views']; ?> 浏览</div>
-                            <div>💬 <?php echo $thread['replies']; ?> 回复</div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- 社区统计 -->
-        <div class="main-content">
-            <h2 style="margin-bottom: 20px; color: #FFD700;">📊 社区统计</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                <div style="text-align: center; padding: 20px; background: rgba(139, 69, 19, 0.3); border-radius: 8px;">
-                    <div style="font-size: 2em; margin-bottom: 10px;">👥</div>
-                    <div style="font-size: 1.5em; font-weight: bold;"><?php echo $user_count; ?></div>
-                    <div>注册玩家</div>
-                </div>
-                <div style="text-align: center; padding: 20px; background: rgba(139, 69, 19, 0.3); border-radius: 8px;">
-                    <div style="font-size: 2em; margin-bottom: 10px;">📝</div>
-                    <div style="font-size: 1.5em; font-weight: bold;"><?php echo $thread_count; ?></div>
-                    <div>讨论帖子</div>
-                </div>
-                <div style="text-align: center; padding: 20px; background: rgba(139, 69, 19, 0.3); border-radius: 8px;">
-                    <div style="font-size: 2em; margin-bottom: 10px;">💎</div>
-                    <div style="font-size: 1.5em; font-weight: bold;">∞</div>
-                    <div>创意无限</div>
-                </div>
-                <div style="text-align: center; padding: 20px; background: rgba(139, 69, 19, 0.3); border-radius: 8px;">
-                    <div style="font-size: 2em; margin-bottom: 10px;">🌟</div>
-                    <div style="font-size: 1.5em; font-weight: bold;">24/7</div>
-                    <div>在线服务</div>
-                </div>
-            </div>
+            <!-- 最新帖子 -->
+<div class="main-content card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: #FFD700;">🆕 最新帖子</h2>
+        <div>
+            <a href="recent.php" class="btn">查看更多</a>
+            <?php if (isLoggedIn()): ?>
+                <a href="post.php" class="btn btn-primary">发布新帖</a>
+            <?php endif; ?>
         </div>
     </div>
-
-    <!-- 页脚 -->
-    <footer style="background: rgba(26, 26, 26, 0.9); padding: 30px 0; margin-top: 50px; text-align: center; border-top: 4px solid #8B4513;">
-        <div class="container">
-            <p>&copy; 2025 <?php echo SITE_NAME; ?> - 一个充满创意的 Minecraft 社区</p>
-            <p style="margin-top: 10px; color: #AAAAAA;">
-                用 ❤️ 和 ⛏️ 为 Minecraft 玩家们打造
-            </p>
+    <?php if (empty($latest_threads)): ?>
+        <div style="color:#888; text-align:center;">暂无最新帖子。</div>
+    <?php else: ?>
+        <!-- 帖子列表内容 -->
+    <?php endif; ?>
+    </div>
+            <?php if (empty($latest_threads)): ?>
+                <div style="color:#888; text-align:center;">暂无最新帖子。</div>
+            <?php else: ?>
+                <div class="thread-list">
+                <?php foreach ($latest_threads as $thread): ?>
+                    <div class="thread-card">
+                        <a class="thread-title" href="thread.php?id=<?php echo $thread['id']; ?>">
+                            <?php echo htmlspecialchars($thread['title']); ?>
+                        </a>
+                        <div class="thread-meta">
+                            [<?php echo htmlspecialchars($thread['category_name']); ?>]
+                            by <?php echo htmlspecialchars($thread['username']); ?>
+                            <span style="margin-left:10px;">创建于 <?php echo $thread['created_at']; ?></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
-    </footer>
-
-    <script src="js/script.js"></script>
+    </div>
 </body>
 </html>
